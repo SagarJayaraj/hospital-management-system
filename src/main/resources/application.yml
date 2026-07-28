@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: hospital-management-system
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/hospital_db}
+    username: ${POSTGRES_USERNAME:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+    circuitbreaker:
+      resilience4j:
+        enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      patientService:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      patientService:
+        maxAttempts: 3
+        waitDuration: 300ms
+  ratelimiter:
+    instances:
+      patientService:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    issuer: hospital-management-system
+    expiry-seconds: 3600
+
+app:
+  messaging:
+    patient-queue: patient.notifications
